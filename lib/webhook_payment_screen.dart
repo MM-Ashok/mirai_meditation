@@ -10,7 +10,7 @@ import 'package:http/http.dart' as http;
 import 'package:maditation/widgets/example_scaffold.dart';
 import 'package:maditation/widgets/loading_button.dart';
 import 'package:path_provider/path_provider.dart';
-// import 'package:simple_permissions/simple_permissions.dart';  
+// import 'package:simple_permissions/simple_permissions.dart';
 import 'package:permission_handler/permission_handler.dart';
 // import 'package:flutter/services.dart' show rootBundle;
 
@@ -49,7 +49,8 @@ class _WebhookPaymentScreenState extends State<WebhookPaymentScreen> {
   void initState() {
     super.initState();
     dio = Dio(); // Initialize Dio
-  }
+
+   }
 
   @override
   Widget build(BuildContext context) {
@@ -108,7 +109,8 @@ class _WebhookPaymentScreenState extends State<WebhookPaymentScreen> {
               String baseUrl = dotenv.env['SERVER_BASE_URL'] ?? "";
 
               if (programList.isNotEmpty) {
-                var firstProgram = programList[0]; // Accessing the first item in the list
+                var firstProgram =
+                    programList[0]; // Accessing the first item in the list
                 // if (firstProgram is Map<String, dynamic>) {
                 //   String url = firstProgram['url'] ?? '';
                 //   if (url.isNotEmpty) {
@@ -117,27 +119,37 @@ class _WebhookPaymentScreenState extends State<WebhookPaymentScreen> {
                 //   }
                 // }
               }
-              if(audioFileUrl.contains(",")){
+              if (audioFileUrl.contains(",")) {
                 List<String> downloadUrls = audioFileUrl.split(",");
                 int totalFileToDownload = downloadUrls.length;
-                print("This is multiple url contain =========> $totalFileToDownload");
+                print(
+                    "This is multiple url contain =========> $totalFileToDownload");
                 print(downloadUrls);
                 int inc = 0;
-                for(String filePath in downloadUrls){
+                for (String filePath in downloadUrls) {
                   inc++;
                   String url = filePath;
                   String filename = filePath.replaceAll(baseUrl, "");
-                  await downloadMultipleFile(url, filename, inc, totalFileToDownload);
-                  await updatePurchasedAudioListing("available_audio.txt", filePath);  
+                  await downloadMultipleFile(
+                      url, filename, inc, totalFileToDownload);
+                  await updatePurchasedAudioListing(
+                      "available_audio.txt", filePath);
                 }
               } else {
                 String url = audioFileUrl;
                 String filename = audioFileUrl.replaceAll(baseUrl, "");
                 await downloadFile(url, filename);
-                await updatePurchasedAudioListing("available_audio.txt", audioFileUrl);
+                await updatePurchasedAudioListing(
+                    "available_audio.txt", audioFileUrl);
               }
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Success!: Your download completed successfully!')));
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content:
+                      Text('Success!: Your download completed successfully!')));
             },
+            style: ElevatedButton.styleFrom(
+              backgroundColor:Colors.green,
+              foregroundColor:Colors.white // Set the background color to green
+            ),
             child: const Text('Download File'),
           ),
       ],
@@ -259,9 +271,9 @@ class _WebhookPaymentScreenState extends State<WebhookPaymentScreen> {
   double progress = 0.0;
   Future<void> downloadFile(String url, String filename) async {
     try {
-      var audioStatus = await Permission.audio.request();  // For audio files
+      var audioStatus = await Permission.audio.request(); // For audio files
       if (audioStatus.isGranted) {
-      // if (await Permission.storage.request().isGranted) { // this will work with less then Android 13
+        // if (await Permission.storage.request().isGranted) { // this will work with less then Android 13
         String filePath = await _getFilePath(filename);
         startDownloadWithProgress(context) async {
           ProgressDialog pd = ProgressDialog(context: context);
@@ -286,18 +298,19 @@ class _WebhookPaymentScreenState extends State<WebhookPaymentScreen> {
                 setState(() {
                   progress = (received / total * 100); // Update progress
                 });
-                print("${(received / total * 100).toStringAsFixed(0)}% downloaded");
+                print(
+                    "${(received / total * 100).toStringAsFixed(0)}% downloaded");
                 print("${progress.toStringAsFixed(0)}% downloaded");
                 int progressLevel = (received / total * 100).toInt();
                 pd.update(
-                    value: progressLevel,
-                    msg: "Downloading $audioTitle Audio");
+                    value: progressLevel, msg: "Downloading $audioTitle Audio");
                 // (context as Element).markNeedsBuild();
               }
             },
           );
           print('File saved to $filePath');
         }
+
         await startDownloadWithProgress(context);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -307,7 +320,9 @@ class _WebhookPaymentScreenState extends State<WebhookPaymentScreen> {
       print('Error: $e');
     }
   }
-  Future<void> downloadMultipleFile(String url, String filename, int inc, int totalFileToDownload) async {
+
+  Future<void> downloadMultipleFile(
+      String url, String filename, int inc, int totalFileToDownload) async {
     try {
       // if (await Permission.storage.request().isGranted) {
       var audioStatus = await Permission.audio.request();
@@ -318,7 +333,8 @@ class _WebhookPaymentScreenState extends State<WebhookPaymentScreen> {
           pd.show(
               max: 100,
               msg: 'Audio Downloading...',
-              completed: Completed(completedMsg: "$inc/$totalFileToDownload Files Done"),
+              completed: Completed(
+                  completedMsg: "$inc/$totalFileToDownload Files Done"),
               progressType: ProgressType.valuable,
               backgroundColor: const Color(0xff212121),
               progressValueColor: const Color(0xff3550B4),
@@ -336,7 +352,8 @@ class _WebhookPaymentScreenState extends State<WebhookPaymentScreen> {
                 setState(() {
                   progress = (received / total * 100); // Update progress
                 });
-                print("${(received / total * 100).toStringAsFixed(0)}% downloaded");
+                print(
+                    "${(received / total * 100).toStringAsFixed(0)}% downloaded");
                 print("${progress.toStringAsFixed(0)}% downloaded");
                 int progressLevel = (received / total * 100).toInt();
                 pd.update(
@@ -348,6 +365,7 @@ class _WebhookPaymentScreenState extends State<WebhookPaymentScreen> {
           print('File saved to $filePath');
           pd.close();
         }
+
         await startDownloadWithProgress(context);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(

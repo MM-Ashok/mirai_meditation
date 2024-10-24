@@ -15,8 +15,8 @@ import 'dart:convert' show json;
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:supabase_flutter/supabase_flutter.dart';
+// ignore: implementation_imports
 import 'package:flutter/src/material/card.dart' as flutter_card;
-
 
 import 'dart:convert';
 
@@ -160,24 +160,22 @@ class _MyFirstScreenState extends State<MyFirstScreen> {
 
   Future<List<dynamic>> _getAvailableAudioTrack() async {
     try {
-   
-        // For emulator
-        final directory = await getApplicationDocumentsDirectory();
-        _file = File('${directory.path}/available_audio.txt');
-        if (!(await _file.exists())) {
-          final data = await rootBundle.load('lib/assets/available_audio.txt');
-          final bytes = data.buffer.asUint8List();
-          await _file.writeAsBytes(bytes);
-          print('File copied to: ${_file.path}');
-          String content =
-              await _file.readAsString(); // Read the file as a string
-          return json.decode(content);
-        } else {
-          String content =
-              await _file.readAsString(); // Read the file as a string
-          return json.decode(content);
-        }
-   
+      // For emulator
+      final directory = await getApplicationDocumentsDirectory();
+      _file = File('${directory.path}/available_audio.txt');
+      if (!(await _file.exists())) {
+        final data = await rootBundle.load('lib/assets/available_audio.txt');
+        final bytes = data.buffer.asUint8List();
+        await _file.writeAsBytes(bytes);
+        print('File copied to: ${_file.path}');
+        String content =
+            await _file.readAsString(); // Read the file as a string
+        return json.decode(content);
+      } else {
+        String content =
+            await _file.readAsString(); // Read the file as a string
+        return json.decode(content);
+      }
     } catch (e) {
       print('Error reading or parsing file: $e');
       return [];
@@ -206,22 +204,24 @@ class _MyFirstScreenState extends State<MyFirstScreen> {
   // }
 
   void _addTrackToPlaylist(Playlist playlist, Map<String, dynamic> track) {
-  if (!playlist.tracks.any((existingTrack) => existingTrack['title'] == track['title'])) {
-    setState(() {
-      playlist.tracks.add(track);
-      print(
-          'Added ${track['title']} to ${playlist.name}. Current tracks: ${playlist.tracks}');
-      _savePlaylists();
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${track['title']} added to ${playlist.name}')),
-    );
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${track['title']} is already in ${playlist.name}')),
-    );
+    if (!playlist.tracks
+        .any((existingTrack) => existingTrack['title'] == track['title'])) {
+      setState(() {
+        playlist.tracks.add(track);
+        print(
+            'Added ${track['title']} to ${playlist.name}. Current tracks: ${playlist.tracks}');
+        _savePlaylists();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${track['title']} added to ${playlist.name}')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text('${track['title']} is already in ${playlist.name}')),
+      );
+    }
   }
-}
 
 // dialog box for creating playlist
   void _showCreatePlaylistDialog() {
@@ -240,10 +240,6 @@ class _MyFirstScreenState extends State<MyFirstScreen> {
           actions: <Widget>[
             ElevatedButton(
               child: const Text("Create"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green, 
-                 foregroundColor: Colors.white, // Set the background color to green
-              ),
               onPressed: () {
                 if (playlistName.isNotEmpty) {
                   _createPlaylist(playlistName);
@@ -253,10 +249,6 @@ class _MyFirstScreenState extends State<MyFirstScreen> {
             ),
             ElevatedButton(
               child: const Text("Cancel"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green, 
-                 foregroundColor: Colors.white, // Set the background color to green
-              ),
               onPressed: () {
                 Navigator.of(context).pop();
               },
@@ -268,76 +260,76 @@ class _MyFirstScreenState extends State<MyFirstScreen> {
   }
 
 //   // For saving  playlists
-Future<void> _savePlaylists() async {
-  try {
-    // For emulator
-    final directory = await getApplicationDocumentsDirectory();
-    final file = File('${directory.path}/available_playlist.txt');
-    
-    // Check if the file exists before reading
-    if (!(await file.exists())) {
-      await file.create(recursive: true);
-      await file.writeAsString(json.encode({'audio_tracks': [], 'playlists': []}));
-    }
-
-    String content = await file.readAsString();
-    
-    // Parse the existing content
-    Map<String, dynamic> existingData;
+  Future<void> _savePlaylists() async {
     try {
-      existingData = json.decode(content) as Map<String, dynamic>;
-    } catch (e) {
-      // If parsing fails, initialize with default structure
-      existingData = {'audio_tracks': [], 'playlists': []};
-    }
+      // For emulator
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/available_playlist.txt');
 
-    List<Map<String, dynamic>> playlistsData = playlists.map((playlist) {
-      return {
-        'name': playlist.name,
-        'tracks': playlist.tracks,
+      // Check if the file exists before reading
+      if (!(await file.exists())) {
+        await file.create(recursive: true);
+        await file
+            .writeAsString(json.encode({'audio_tracks': [], 'playlists': []}));
+      }
+
+      String content = await file.readAsString();
+
+      // Parse the existing content
+      Map<String, dynamic> existingData;
+      try {
+        existingData = json.decode(content) as Map<String, dynamic>;
+      } catch (e) {
+        // If parsing fails, initialize with default structure
+        existingData = {'audio_tracks': [], 'playlists': []};
+      }
+
+      List<Map<String, dynamic>> playlistsData = playlists.map((playlist) {
+        return {
+          'name': playlist.name,
+          'tracks': playlist.tracks,
+        };
+      }).toList();
+
+      // Combine existing audio tracks with the new playlists
+      Map<String, dynamic> combinedData = {
+        'audio_tracks': existingData['audio_tracks'] ?? [],
+        'playlists': playlistsData,
       };
-    }).toList();
 
-    // Combine existing audio tracks with the new playlists
-    Map<String, dynamic> combinedData = {
-      'audio_tracks': existingData['audio_tracks'] ?? [],
-      'playlists': playlistsData,
-    };
-
-    await file.writeAsString(json.encode(combinedData));
-    print('Playlists saved successfully!');
-  } catch (e) {
-    print('Error saving playlists: $e');
+      await file.writeAsString(json.encode(combinedData));
+      print('Playlists saved successfully!');
+    } catch (e) {
+      print('Error saving playlists: $e');
+    }
   }
-}
 
 // For load playlists
   Future<void> _loadPlaylists() async {
     try {
-        //for emulator
-        final directory = await getApplicationDocumentsDirectory();
-        final file = File('${directory.path}/available_playlist.txt');
+      //for emulator
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/available_playlist.txt');
 
-        if (await file.exists()) {
-          // Read the content from the file
-          String content = await file.readAsString();
-          Map<String, dynamic> combinedData = json.decode(content);
+      if (await file.exists()) {
+        // Read the content from the file
+        String content = await file.readAsString();
+        Map<String, dynamic> combinedData = json.decode(content);
 
-          // Load the playlists from the 'playlists' section of the file
-          List<dynamic> jsonPlaylists = combinedData['playlists'] ?? [];
+        // Load the playlists from the 'playlists' section of the file
+        List<dynamic> jsonPlaylists = combinedData['playlists'] ?? [];
 
-          // Update the playlists in the state
-          setState(() {
-            playlists = jsonPlaylists.map((jsonPlaylist) {
-              return Playlist(
-                name: jsonPlaylist['name'],
-                tracks: List<dynamic>.from(jsonPlaylist['tracks']),
-              );
-            }).toList();
-          });
-          print('Playlists loaded successfully!');
-        }
-      
+        // Update the playlists in the state
+        setState(() {
+          playlists = jsonPlaylists.map((jsonPlaylist) {
+            return Playlist(
+              name: jsonPlaylist['name'],
+              tracks: List<dynamic>.from(jsonPlaylist['tracks']),
+            );
+          }).toList();
+        });
+        print('Playlists loaded successfully!');
+      }
     } catch (e) {
       print('Error loading playlists: $e');
     }
@@ -356,25 +348,22 @@ Future<void> _savePlaylists() async {
                   mainAxisSize: MainAxisSize.min,
                   children: playlists.map((playlist) {
                     return flutter_card.Card(
-                        elevation: 4.0, // Adds shadow for better visual effect
-                        margin: const EdgeInsets.symmetric(vertical: 8.0),
-                        child:ListTile(
-                          title: Text(playlist.name),
-                          onTap: () {
-                            _addTrackToPlaylist(playlist, track);
-                            Navigator.of(context).pop(); // Close the dialog
-                          },
-                        ),
+                      color: const Color.fromARGB(255, 30, 144, 226),
+                      elevation: 4.0, // Adds shadow for better visual effect
+                      margin: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: ListTile(
+                        title: Text(playlist.name),
+                        onTap: () {
+                          _addTrackToPlaylist(playlist, track);
+                          Navigator.of(context).pop(); // Close the dialog
+                        },
+                      ),
                     );
                   }).toList(),
                 ),
           actions: <Widget>[
             ElevatedButton(
               child: const Text("Cancel"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                 foregroundColor: Colors.white,  // Set the background color to green
-              ),
               onPressed: () {
                 Navigator.of(context).pop();
               },
@@ -388,7 +377,6 @@ Future<void> _savePlaylists() async {
   @override
   void initState() {
     super.initState();
-    fetchFreeTracks();
     _audioPlayer = AudioPlayer(); // Initialize AudioPlayer
     _loadPlaylists();
     _audioPlayer.playerStateStream.listen((state) {
@@ -398,7 +386,6 @@ Future<void> _savePlaylists() async {
         }
       });
     });
-    
   }
 
   @override
@@ -429,77 +416,6 @@ Future<void> _savePlaylists() async {
     }
   }
 
-
-//   Future<List<dynamic>> fetchFreeTracks() async {
-//     String freeProgramsJson = dotenv.env['PROGRAM'] ?? '[]';
-//     List<dynamic> programsData = jsonDecode(freeProgramsJson);
-//     return programsData
-//         .where((program) => program['status'] == 'free')
-//         .map((program) => {
-//             "title": program['name'],
-//             "file": program['url'].split("/").last, // Extracting the file name
-//           })
-//         .toList();
-//   }
-
-// Function to fetch both available audio tracks and free tracks
-  // Future<List<dynamic>> fetchAllTracks() async {
-  //   List<dynamic> availableTracks =
-  //       await _getAvailableAudioTrack(); // Replace with your implementation
-  //   List<dynamic> freeTracks = await fetchFreeTracks();
-
-  //   print('downloaded ======> $availableTracks');
-  //   print('free ======> $freeTracks');
-
-  //   return availableTracks + freeTracks; // Combine both lists
-  // }
-
-  Future<List<dynamic>> fetchFreeTracks() async {
-    String freeProgramsJson = dotenv.env['PROGRAM'] ?? '[]';
-    List<dynamic> programsData = jsonDecode(freeProgramsJson);
-
-    // Filter free programs
-    List<dynamic> freeTracks =
-        programsData.where((program) => program['status'] == 'free').toList();
-
-    // Write default audio tracks to available_audio.txt
-    await _writeDefaultAudioTracks(freeTracks);
-
-    return freeTracks;
-  }
-
-  Future<void> _writeDefaultAudioTracks(List<dynamic> freeTracks) async {
-    List<Map<String, String>> defaultTracks = [];
-
-    // Assuming you want to create default tracks based on the free tracks
-    for (var program in freeTracks) {
-      String audioFileUrl = program['url'] ?? ''; // Get the audio file URL
-      List<String> audioTrackNamePart =
-          audioFileUrl.split("/"); // Split to get the track name part
-      String audioTitle = audioTrackNamePart.last
-          .replaceAll(".mp3", ""); // Extract audio title without .mp3
-
-      // Create the default track entry
-      defaultTracks.add({
-        "title": audioTitle,
-        "file": audioTrackNamePart.last,
-      });
-    }
-
-    // Get the application documents directory
-    Directory appDocDir = await getApplicationDocumentsDirectory();
-    String filePath = '${appDocDir.path}/available_audio.txt';
-
-    // Write the default tracks to the file in JSON format
-    File file = File(filePath);
-    await file.writeAsString(jsonEncode(defaultTracks));
-
-    print('Default audio tracks written to $filePath');
-    print('Default audio tracks written to $defaultTracks');
-  }
-
-
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -514,10 +430,10 @@ Future<void> _savePlaylists() async {
                 flexibleSpace: FlexibleSpaceBar(
                   background: Image.asset(
                     'assets/main-banner.jpg',
-                    width: 100,  // Width of the image
+                    width: 100, // Width of the image
                     height: 100, // Height of the image
-                    fit: BoxFit.cover, 
-                    ),
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
               SliverFillRemaining(
@@ -539,10 +455,6 @@ Future<void> _savePlaylists() async {
                                 child: ElevatedButton(
                                   onPressed: _showCreatePlaylistDialog,
                                   child: const Text('Create New Playlist'),
-                                  style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green, 
-                 foregroundColor: Colors.white, // Set the background color to green
-              ),
                                 ),
                               ),
                               Expanded(
@@ -551,9 +463,11 @@ Future<void> _savePlaylists() async {
                                   itemBuilder: (context, index) {
                                     final playlist = playlists[index];
                                     return flutter_card.Card(
-                                      elevation: 4.0, // Adds shadow for better visual effect
-                                      margin: const EdgeInsets.symmetric(vertical: 8.0),
-                                      child:ListTile(
+                                      elevation:
+                                          4.0, // Adds shadow for better visual effect
+                                      margin: const EdgeInsets.symmetric(
+                                          vertical: 8.0),
+                                      child: ListTile(
                                         title: Text(playlist.name),
                                         onTap: () {
                                           Navigator.push(
@@ -590,33 +504,43 @@ Future<void> _savePlaylists() async {
                                   itemCount: audioList?.length,
                                   itemBuilder: (context, index) {
                                     final audio = audioList?[index];
-                                    String? currentPlaying =  currentAudioUrl?.split("/").last;
+                                    String? currentPlaying =
+                                        currentAudioUrl?.split("/").last;
                                     return flutter_card.Card(
-                                      elevation: 4.0, // Adds shadow for better visual effect
-                                      margin: const EdgeInsets.symmetric(vertical: 8.0),
-                                      child:ListTile(
+                                      elevation:
+                                          4.0, // Adds shadow for better visual effect
+                                      margin: const EdgeInsets.symmetric(
+                                          vertical: 8.0),
+                                      child: ListTile(
                                         title: Text(audio['title']),
                                         leading: const Icon(Icons.music_note),
                                         trailing: Row(
                                           mainAxisSize: MainAxisSize.min,
-                                          children:[
+                                          children: [
                                             IconButton(
-                                              icon: Icon((currentPlaying == '${audio['file']}')
+                                              icon: Icon(
+                                                (currentPlaying ==
+                                                        '${audio['file']}')
                                                     ? Icons.pause
                                                     : Icons.play_arrow,
                                               ),
                                               onPressed: () async {
-                                                Directory appDocDir = await getApplicationDocumentsDirectory();
-                                                String appDocPath = appDocDir.path;
+                                                Directory appDocDir =
+                                                    await getApplicationDocumentsDirectory();
+                                                String appDocPath =
+                                                    appDocDir.path;
                                                 String filename = audio['file'];
-                                                String audioUrl = '$appDocPath/$filename';
-                                                _playAudio(audioUrl); // Play the audio
+                                                String audioUrl =
+                                                    '$appDocPath/$filename';
+                                                _playAudio(
+                                                    audioUrl); // Play the audio
                                               },
                                             ),
                                             IconButton(
                                               icon: const Icon(Icons.add),
-                                              onPressed: () { 
-                                                _showPlaylistSelectionDialog(audio);
+                                              onPressed: () {
+                                                _showPlaylistSelectionDialog(
+                                                    audio);
                                               },
                                             ),
                                           ],
@@ -624,24 +548,32 @@ Future<void> _savePlaylists() async {
                                         onTap: () async {
                                           String audioUrl;
                                           // For non-web platforms (mobile/desktop)
-                                          Directory appDocDir = await getApplicationDocumentsDirectory();
+                                          Directory appDocDir =
+                                              await getApplicationDocumentsDirectory();
                                           String appDocPath = appDocDir.path;
                                           String filename = audio['file'];
                                           audioUrl = '$appDocPath/$filename';
-                                          _playAudio(audioUrl); // Play the audio
+                                          _playAudio(
+                                              audioUrl); // Play the audio
                                           print(audioUrl);
                                           if (currentPlaying == null) {
-                                            ScaffoldMessenger.of(context).showSnackBar(
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
                                               SnackBar(
-                                                content: Text('Start playing your favorite ${audio['title']} (Audio)'),
-                                                duration: const Duration(seconds: 2),
+                                                content: Text(
+                                                    'Start playing your favorite ${audio['title']} (Audio)'),
+                                                duration:
+                                                    const Duration(seconds: 2),
                                               ),
                                             );
                                           } else {
-                                            ScaffoldMessenger.of(context).showSnackBar(
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
                                               SnackBar(
-                                                content: Text('Stop playing your favorite ${audio['title']} (Audio)'),
-                                                duration: const Duration(seconds: 2),
+                                                content: Text(
+                                                    'Stop playing your favorite ${audio['title']} (Audio)'),
+                                                duration:
+                                                    const Duration(seconds: 2),
                                               ),
                                             );
                                           }
@@ -694,7 +626,6 @@ class _PlaylistTracksPageState extends State<PlaylistTracksPage> {
         }
       });
     });
-    
   }
 
   @override
@@ -727,10 +658,11 @@ class _PlaylistTracksPageState extends State<PlaylistTracksPage> {
 
   @override
   Widget build(BuildContext context) {
-    String? currentPlaying =  currentAudioUrl?.split("/").last;
+    String? currentPlaying = currentAudioUrl?.split("/").last;
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.playlist.name), // Display the playlist name as the title
+        title: Text(
+            widget.playlist.name), // Display the playlist name as the title
       ),
       body: widget.playlist.tracks.isEmpty
           ? const Center(
@@ -743,19 +675,21 @@ class _PlaylistTracksPageState extends State<PlaylistTracksPage> {
                 return flutter_card.Card(
                   elevation: 4.0, // Adds shadow for better visual effect
                   margin: const EdgeInsets.symmetric(vertical: 8.0),
-                  child:ListTile(
+                  child: ListTile(
                     title: Text(track['title']),
                     leading: const Icon(Icons.music_note),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
-                      children:[
+                      children: [
                         IconButton(
-                          icon: Icon((currentPlaying == '${track['file']}')
+                          icon: Icon(
+                            (currentPlaying == '${track['file']}')
                                 ? Icons.pause
                                 : Icons.play_arrow,
                           ),
                           onPressed: () async {
-                            Directory appDocDir = await getApplicationDocumentsDirectory();
+                            Directory appDocDir =
+                                await getApplicationDocumentsDirectory();
                             String appDocPath = appDocDir.path;
                             String filename = track['file'];
                             String audioUrl = '$appDocPath/$filename';
@@ -764,44 +698,46 @@ class _PlaylistTracksPageState extends State<PlaylistTracksPage> {
                         ),
                         // IconButton(
                         //   icon: Icon(Icons.add),
-                        //   onPressed: () { 
+                        //   onPressed: () {
                         //     _showPlaylistSelectionDialog(audio);
                         //   },
                         // ),
                       ],
                     ),
                     onTap: () async {
-                      String audioUrl;                
-                        // For non-web platforms (mobile/desktop)
-                        Directory appDocDir =
-                            await getApplicationDocumentsDirectory();
-                        String appDocPath = appDocDir.path;
-                        String filename = track['file'];
-                        audioUrl = '$appDocPath/$filename';
-                        _playAudio(audioUrl); // Play the audio
-                        print(audioUrl);
-                        print("currentPlaying ====> ");
-                        print(currentPlaying);
-                        if (currentPlaying == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Start playing your favorite ${track['title']} (Audio)'),
-                              duration: const Duration(seconds: 2),
-                            ),
-                          );
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Stop playing your favorite ${track['title']} (Audio)'),
-                              duration: const Duration(seconds: 2),
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                  );
-                },
-              ),
+                      String audioUrl;
+                      // For non-web platforms (mobile/desktop)
+                      Directory appDocDir =
+                          await getApplicationDocumentsDirectory();
+                      String appDocPath = appDocDir.path;
+                      String filename = track['file'];
+                      audioUrl = '$appDocPath/$filename';
+                      _playAudio(audioUrl); // Play the audio
+                      print(audioUrl);
+                      print("currentPlaying ====> ");
+                      print(currentPlaying);
+                      if (currentPlaying == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                                'Start playing your favorite ${track['title']} (Audio)'),
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                                'Stop playing your favorite ${track['title']} (Audio)'),
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                );
+              },
+            ),
     );
   }
 }
@@ -817,171 +753,101 @@ class _StoreProgram extends State<StoreProgram> {
   Widget build(BuildContext context) {
     String PROGRAM = dotenv.env['PROGRAM'] ?? 'No Program Available';
     final List<dynamic> programList = json.decode(PROGRAM.toString());
-    String discountedProgram = dotenv.env['SINGLE_DISCOUNTED_PROGRAM'] ?? 'No Program Available';
-    Map<String, dynamic> discountedProgramMap = json.decode(discountedProgram.toString());
-    print("=======================> discountedProgramMap <=======================");
+    String discountedProgram =
+        dotenv.env['SINGLE_DISCOUNTED_PROGRAM'] ?? 'No Program Available';
+    Map<String, dynamic> discountedProgramMap =
+        json.decode(discountedProgram.toString());
+    print(
+        "=======================> discountedProgramMap <=======================");
     print(discountedProgramMap['url']);
-  
-   // Add the discounted program as the first item
-    var purchaseAllAudio = {
-      'name': 'Purchase all audio',
-      'price': discountedProgramMap['price'],
-      'description': discountedProgramMap['description'],
-      'url': discountedProgramMap['url'],
-      'logo': discountedProgramMap['logo'],
-      'status': 'paid'
-    };
-
- programList.insert(0, purchaseAllAudio);
-
+    // String discounted_program = dotenv.env['SINGLE_DISCOUNTED_PROGRAM'] ?? 'No Program Available';
     return Scaffold(
+      // appBar: AppBar(
+      //   title: const Center(child: Text('All programs')),
+      // ),
       body: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(
           children: <Widget>[
             // First ListView.builder
-            // ElevatedButton(
-            //   style: ElevatedButton.styleFrom(
-            //     backgroundColor: Colors.green, // Set the background color to green
-            //   ),
-            //   onPressed: () {
-            //     // Handle button press
-            //     Navigator.push(
-            //       context,
-            //       MaterialPageRoute(
-            //         builder: (context) => DiscountProgramDetailPage(
-            //             singerLogo:discountedProgramMap['logo'] ?? "",
-            //             programName: discountedProgramMap['name'] ?? "",
-            //             fullDescription: discountedProgramMap['description'] ?? "",
-            //             price: double.parse(discountedProgramMap['price']),
-            //             audioFileUrl: discountedProgramMap['url'] ?? ""
-            //           ),
-            //       ),
-            //     );
-            //   },
-            //   child: const Text('Download All Audio on Discounted Price'),
-            // ),
+            ElevatedButton(
+              onPressed: () {
+                // Handle button press
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => DiscountProgramDetailPage(
+                        singerLogo: discountedProgramMap['logo'] ?? "",
+                        programName: discountedProgramMap['name'] ?? "",
+                        fullDescription:
+                            discountedProgramMap['description'] ?? "",
+                        price: double.parse(discountedProgramMap['price']),
+                        audioFileUrl: discountedProgramMap['url'] ?? ""),
+                  ),
+                );
+              },
+              child: const Text('Download All Audio on Discounted Price'),
+            ),
             const SizedBox(height: 16), // Add space between the two ListViews
             // Second ListView.builder
             Expanded(
               child: ListView.builder(
-                itemCount: programList.length,
-                itemBuilder: (context, index) {
-                  var program = programList[index];
-                  String programName = program['name'] ?? 'sample program';
-                  double price;
-                  String sprice;
+                  itemCount: programList.length,
+                  itemBuilder: (context, index) {
+                    var program = programList[index];
+                    String programName = program['name'] ?? 'sample program';
+                    double price;
+                    String sprice;
 
-                  if (program['status'] == "free") {
-                    price = double.parse('00');
-                    sprice = '\nPrice :- This program is FREE';
-                  } else {
-                    price = double.parse(program['price']);
-                    sprice = '\nPrice :- \$' + program['price'];
-                  }
+                    if (program['status'] == "free") {
+                      price = double.parse('00');
+                      sprice = '\nPrice :- This program is FREE';
+                    } else {
+                      price = double.parse(program['price']);
+                      sprice = '\nPrice :- \$' + program['price'];
+                    }
 
-                  // Now you can safely use sprice here:
-                  // String shortDescription =program['shortDescription'] + ' ' + sprice;
-                  String shortDescription =(program['shortDescription'] ?? '') + ' ' + sprice;
-                  String fullDescription =
-                      program['description'] ?? 'Full Description';
-                  String audioFileUrl = program['url'] ?? '';
-                  // ignore: prefer_interpolation_to_compose_strings
-                  String singerLogo = "assets/singers/"+program['logo'];
-                  print(singerLogo);
-                  return Column(
-                    children: [
-                      flutter_card.Card(
+                    // Now you can safely use sprice here:
+                    String shortDescription =
+                        program['shortDescription'] + ' ' + sprice;
+                    String fullDescription =
+                        program['description'] ?? 'Full Description';
+                    String audioFileUrl = program['url'] ?? '';
+                    String singerLogo = "assets/singers/" + program['logo'];
+                    print(singerLogo);
+
+                    return flutter_card.Card(
+                      color: const Color.fromARGB(255, 128, 159, 180),
                       elevation: 4.0, // Adds shadow for better visual effect
                       margin: const EdgeInsets.symmetric(vertical: 8.0),
-                      child:ListTile(
-                        // leading: const FlutterLogo(),
-                          leading: Image.asset(
-                              singerLogo,
-                              width: 70,
-                              height: 70,
-                              fit: BoxFit.cover,
-                            ),
-                          title: Text(programName),
-                          subtitle: Text(shortDescription),
-                          // trailing: const Icon(Icons.more_vert),
-                          onTap: () {
-                            // Ensure onTap is correctly placed and functional
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ProgramDetailPage(
-                                    singerLogo:singerLogo,
-                                    programName: programName,
-                                    fullDescription: fullDescription,
-                                    price: price,
-                                    audioFileUrl: audioFileUrl),
-                              ),
-                            );
-                          },
+                      child: ListTile(
+                        leading: Image.asset(
+                          singerLogo,
+                          width: 70,
+                          height: 70,
+                          fit: BoxFit.cover,
                         ),
+                        title: Text(programName),
+                        subtitle: Text(shortDescription),
+                        onTap: () {
+                          // Ensure onTap is correctly placed and functional
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ProgramDetailPage(
+                                singerLogo: singerLogo,
+                                programName: programName,
+                                fullDescription: fullDescription,
+                                price: price,
+                                audioFileUrl: audioFileUrl,
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                      const Divider(),
-                    ],
-                  );
-                }
-              ),
+                    );
+                  }),
             ),
-            //  Expanded(
-            //   child: ListView.builder(
-            //     itemCount: programList.length,
-            //     itemBuilder: (context, index) {
-            //       var program = programList[index];
-            //       String programName = program['name'] ?? 'sample program';
-            //       double price;
-            //       String sprice;
-
-            //       if (program['status'] == "free") {
-            //         price = double.parse('00');
-            //         sprice = '\nPrice :- This program is FREE';
-            //       } else {
-            //         price = double.parse(program['price']);
-            //         sprice = '\nPrice :- \$' + program['price'];
-            //       }
-
-            //       // String shortDescription =program['shortDescription'] + ' ' + sprice;
-            //       String shortDescription =(program['shortDescription'] ?? '') + ' ' + sprice;
-
-            //       String fullDescription =program['description'] ?? 'Full Description';
-            //       String audioFileUrl = program['url'] ?? '';
-            //       String singerLogo = "assets/singers/" + program['logo'];
-
-            //       return Column(
-            //         children: [
-            //           ListTile(
-            //             leading: Image.asset(
-            //               singerLogo,
-            //               width: 70,
-            //               height: 70,
-            //               fit: BoxFit.cover,
-            //             ),
-            //             title: Text(programName),
-            //             subtitle: Text(shortDescription),
-            //             onTap: () {
-            //               Navigator.push(
-            //                 context,
-            //                 MaterialPageRoute(
-            //                   builder: (context) => ProgramDetailPage(
-            //                       singerLogo: singerLogo,
-            //                       programName: programName,
-            //                       fullDescription: fullDescription,
-            //                       price: price,
-            //                       audioFileUrl: audioFileUrl),
-            //                 ),
-            //               );
-            //             },
-            //           ),
-            //           const Divider(),
-            //         ],
-            //       );
-            //     },
-            //   ),
-            // ),
           ],
         ),
       ),
@@ -1012,15 +878,16 @@ class SupportPage extends StatelessWidget {
           return flutter_card.Card(
             elevation: 4.0, // Adds shadow for better visual effect
             margin: const EdgeInsets.symmetric(vertical: 8.0),
-            child:ListTile(
-              leading: Icon(Icons.ac_unit),
+            child: ListTile(
+              leading: const Icon(Icons.ac_unit),
               title: Text(items[index]),
               onTap: () {
                 switch (items[index]) {
                   case "FAQ":
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const ScreenFaq()),
+                      MaterialPageRoute(
+                          builder: (context) => const ScreenFaq()),
                     );
                     break;
                   case "Contact":
@@ -1075,10 +942,6 @@ class DownloadPurchasedAudioFiles extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(25),
         child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white, // Set the background color to green
-              ),
           onPressed: () {
             print("Download audio file");
           },
@@ -1215,24 +1078,20 @@ class DarkLightThemePage extends StatelessWidget {
           final theme = themeProvider.themes[index];
           final isSelected = theme == selectedTheme;
 
-          return flutter_card.Card(
-            elevation: 4.0, // Adds shadow for better visual effect
-            margin: const EdgeInsets.symmetric(vertical: 8.0),
-            child:ListTile(
-              title: Text(
-                'Theme ${index + 1}',
-                style: TextStyle(
-                  color: isSelected ? theme.colorScheme.primary : null,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                ),
+          return ListTile(
+            title: Text(
+              'Theme ${index + 1}',
+              style: TextStyle(
+                color: isSelected ? theme.colorScheme.primary : null,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
-              tileColor: isSelected
-                  ? theme.colorScheme.secondary.withOpacity(0.2)
-                  : null,
-              onTap: () {
-                themeProvider.setTheme(theme);
-              },
             ),
+            tileColor: isSelected
+                ? theme.colorScheme.secondary.withOpacity(0.2)
+                : null,
+            onTap: () {
+              themeProvider.setTheme(theme);
+            },
           );
         },
       ),

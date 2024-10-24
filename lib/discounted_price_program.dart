@@ -66,6 +66,10 @@ class StripeButton extends StatelessWidget {
     String buttonLabel = "\$$price will be charged on your card";
     return ElevatedButton(
           child: Text(buttonLabel),
+          style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green, 
+                 foregroundColor: Colors.white, // Set the background color to green
+              ),
           onPressed: () {
             Navigator.push(
               context,

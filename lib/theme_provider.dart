@@ -12,12 +12,28 @@ class ThemeProvider with ChangeNotifier {
     notifyListeners();
   }
 
+   // Method to get the name of the current theme
+  String get currentThemeName {
+    if (_selectedTheme == lightTheme) {
+      return 'Light Theme';
+    } else if (_selectedTheme == darkTheme) {
+      return 'Dark Theme';
+    } else if (_selectedTheme == redTheme) {
+      return 'Red Theme';
+    } else if (_selectedTheme == greenTheme) {
+      return 'Green Theme';
+    } else if (_selectedTheme == blueTheme) {
+      return 'Blue Theme';
+    }
+    return 'Unknown Theme';
+  }
+
   static final ThemeData lightTheme = ThemeData(
     brightness: Brightness.light,
     primaryColor: Colors.white,
     colorScheme: const ColorScheme.light(
       primary: Colors.grey,
-      secondary: Colors.white60,
+      secondary: Colors.blueGrey,
     ),
     appBarTheme: const AppBarTheme(
       backgroundColor: Colors.grey,
