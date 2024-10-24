@@ -1,0 +1,811 @@
+import 'dart:async';
+import 'dart:io';
+// import 'package:audioplayers/audioplayers.dart';
+import 'package:just_audio/just_audio.dart';
+
+import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:provider/provider.dart';
+import 'detail_page.dart';
+import 'program_detail_page.dart';
+import 'theme_provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'dart:convert' show json;
+import 'package:flutter_stripe/flutter_stripe.dart';
+import 'package:flutter/services.dart' show rootBundle;
+
+//async
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await dotenv.load(fileName: 'assets/.env');
+    print(".env file loaded");
+  } catch (e) {
+    print('!Error .env file loading error =>  $e');
+  }
+
+  Stripe.publishableKey =
+      'pk_test_51Px58MGj3R37BVZgxcjRb42V2ijPnlRqhv5NK3bGl3zeThiFMRYV6iFvYaW7Gyg52JbAmYe9K0T3Hbp3zhQqWFAj00qJBBjyUI';
+  Stripe.merchantIdentifier = 'merchant.flutter.stripe.test';
+  Stripe.urlScheme = 'flutterstripe';
+  await Stripe.instance.applySettings();
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => ThemeProvider(),
+      child: const MyApp(),
+    ),
+  );
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+  @override
+  Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
+    return MaterialApp(
+      theme: themeProvider.selectedTheme,
+      title: 'Positive Thinking Meditation',
+      home: const MyHomePage(),
+    );
+  }
+}
+
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key});
+
+  @override
+  _MyHomePageState createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  int _selectedIndex = 0;
+
+  static final List<Widget> _widgetOptions = <Widget>[
+    const MyFirstScreen(),
+    const StoreProgram(),
+    const DarkLightThemePage(),
+    const SupportPage(),
+    const Text('comment Page'),
+  ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Center(child: Text('Positive Thinking Meditation')),
+      ),
+      body: Center(
+        child: _widgetOptions.elementAt(_selectedIndex),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.headphones),
+            label: 'Play',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.store),
+            label: 'Store',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: 'Setting',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.support),
+            label: 'Support',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.comment),
+            label: 'Comment',
+          ),
+        ],
+        currentIndex: _selectedIndex,
+        selectedItemColor: Colors.amber[800],
+        onTap: _onItemTapped,
+      ),
+    );
+  }
+}
+
+class Playlist {
+  String name;
+  List<dynamic> tracks;
+
+  Playlist({required this.name, required this.tracks});
+}
+
+class MyFirstScreen extends StatefulWidget {
+  const MyFirstScreen({super.key});
+
+  @override
+  _MyFirstScreenState createState() => _MyFirstScreenState();
+}
+
+class _MyFirstScreenState extends State<MyFirstScreen> {
+  late File _file;
+  late AudioPlayer _audioPlayer;
+
+  List<Playlist> playlists = []; // List to store created playlists
+  String newPlaylistName = '';
+
+  Future<List<dynamic>> _getAvailableAudioTrack() async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      _file = File('${directory.path}/available_audio.txt');
+      if (!(await _file.exists())) {
+        final data = await rootBundle.load('lib/assets/available_audio.txt');
+        final bytes = data.buffer.asUint8List();
+        await _file.writeAsBytes(bytes);
+        print('File copied to: ${_file.path}');
+        String content =
+            await _file.readAsString(); // Read the file as a string
+        return json.decode(content);
+      } else {
+        String content =
+            await _file.readAsString(); // Read the file as a string
+        return json.decode(content);
+      }
+    } catch (e) {
+      print('Error reading or parsing file: $e');
+      return []; // Return an empty list in case of error
+    }
+  }
+
+  void _createPlaylist(String name) {
+    setState(() {
+      playlists.add(Playlist(name: name, tracks: []));
+    });
+  }
+
+  void _addTrackToPlaylist(Playlist playlist, dynamic track) {
+    setState(() {
+      playlist.tracks.add(track);
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _audioPlayer = AudioPlayer(); // Initialize AudioPlayer
+  }
+
+  // void _playAudio(String url) async {
+  //   try {
+  //     _audioPlayer.setAudioSource(AudioSource.uri(Uri.parse(url)));
+  //     _audioPlayer.play(); // No need to assign the result
+  //     print('Audio started successfully');
+  //   } catch (e) {
+  //     print('Error playing audio: $e');
+  //   }
+  // }
+
+
+  void _playAudio(String filePath) async {
+  try {
+    // Check if the file exists
+    final file = File(filePath);
+    if (await file.exists()) {
+      // Convert the file path to a valid URI and play it
+      Uri fileUri = Uri.file(file.path);
+      await _audioPlayer.setAudioSource(AudioSource.uri(fileUri));
+      _audioPlayer.play();
+      print('Audio started successfully from $filePath');
+    } else {
+      print('Error: Audio file not found at $filePath');
+    }
+  } catch (e) {
+    print('Error playing audio: $e');
+  }
+}
+
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose(); // Dispose of the audio player when not needed
+    super.dispose();
+  }
+
+  void _showCreatePlaylistDialog() {
+    String playlistName = '';
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Create New Playlist'),
+          content: TextField(
+            onChanged: (value) {
+              playlistName = value;
+            },
+            decoration: const InputDecoration(hintText: "Enter playlist name"),
+          ),
+          actions: <Widget>[
+            ElevatedButton(
+              child: const Text("Create"),
+              onPressed: () {
+                if (playlistName.isNotEmpty) {
+                  _createPlaylist(playlistName);
+                  Navigator.of(context).pop();
+                }
+              },
+            ),
+            ElevatedButton(
+              child: const Text("Cancel"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
+  Future<List<dynamic>> _getPlaylists() async {
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/playlists.json');
+
+    if (await file.exists()) {
+      String content = await file.readAsString();
+      return json.decode(content);
+    }
+
+    return []; // Return an empty list if no playlists are found
+  }
+   Future<void> _savePlaylists() async {
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/playlists.json');
+    List<Map<String, dynamic>> playlistsData = playlists
+        .map((playlist) => {
+              'name': playlist.name,
+              'tracks': playlist.tracks,
+            })
+        .toList();
+    await file.writeAsString(json.encode(playlistsData));
+  }
+
+  Future<void> _loadPlaylists() async {
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/playlists.json');
+
+    if (await file.exists()) {
+      String content = await file.readAsString();
+      List<dynamic> jsonPlaylists = json.decode(content);
+      setState(() {
+        playlists = jsonPlaylists.map((jsonPlaylist) {
+          return Playlist(
+            name: jsonPlaylist['name'],
+            tracks: List<dynamic>.from(jsonPlaylist['tracks']),
+          );
+        }).toList();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: DefaultTabController(
+        length: 2, // Define the number of tabs
+        child: Scaffold(
+          body: CustomScrollView(
+            slivers: <Widget>[
+              SliverAppBar(
+                expandedHeight: 200.0,
+                flexibleSpace: FlexibleSpaceBar(
+                  background: Image.network(
+                      'https://muhlenbergweekly.com/wp-content/uploads/2021/12/meditation-3922701_1280.jpg'),
+                ),
+              ),
+             SliverFillRemaining(
+                child: Column(
+                  children: [
+                    const TabBar(
+                      tabs: [
+                        Tab(text: 'Play List'),
+                        Tab(text: 'Tracks'),
+                      ],
+                    ),
+                    Expanded(
+                      child: TabBarView(
+                        children: [
+                          Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ElevatedButton(
+              onPressed: _showCreatePlaylistDialog,
+              child: const Text('Create New Playlist'),
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: playlists.length,
+              itemBuilder: (context, index) {
+                final playlist = playlists[index];
+                return ListTile(
+                  title: Text(playlist.name),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            PlaylistTracksPage(playlist: playlist),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+                          FutureBuilder<List<dynamic>>(
+                            future: _getAvailableAudioTrack(),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const CircularProgressIndicator();
+                              } else if (snapshot.hasError) {
+                                return Text('Error: ${snapshot.error}');
+                              } else if (snapshot.hasData) {
+                                var audioList = snapshot.data;
+                                return ListView.builder(
+                                  itemCount: audioList?.length,
+                                  itemBuilder: (context, index) {
+                                    final audio = audioList?[index];
+                                    return ListTile(
+                                      title: Text(audio['title']),
+                                      leading: const Icon(Icons.audio_file),
+                                      onTap: () async {
+                                        Directory appDocDir =
+                                            await getApplicationDocumentsDirectory();
+                                        String appDocPath = appDocDir.path;
+                                        String filename = audio['file'];
+                                        String audioUrl =
+                                            '$appDocPath/$filename';
+                                        _playAudio(audioUrl);
+                                      },
+                                    );
+                                  },
+                                );
+                              } else {
+                                return const Text('No data available');
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+class PlaylistTracksPage extends StatefulWidget {
+  final Playlist playlist;
+
+  const PlaylistTracksPage({super.key, required this.playlist});
+
+  @override
+  _PlaylistTracksPageState createState() => _PlaylistTracksPageState();
+}
+
+class _PlaylistTracksPageState extends State<PlaylistTracksPage> {
+  late AudioPlayer _audioPlayer;
+
+  @override
+  void initState() {
+    super.initState();
+    _audioPlayer = AudioPlayer();
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
+  Future<void> _playAudio(String filePath) async {
+    try {
+      final file = File(filePath);
+      if (await file.exists()) {
+        Uri fileUri = Uri.file(file.path);
+        await _audioPlayer.setAudioSource(AudioSource.uri(fileUri));
+        _audioPlayer.play();
+        print('Audio started successfully from $filePath');
+      } else {
+        print('Error: Audio file not found at $filePath');
+      }
+    } catch (e) {
+      print('Error playing audio: $e');
+    }
+  }
+
+  Future<List<dynamic>> _getAvailableAudioTrack() async {
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/available_audio.txt');
+    if (await file.exists()) {
+      String content = await file.readAsString();
+      return json.decode(content);
+    } else {
+      return [];
+    }
+  }
+
+  void _addTrackToPlaylist(dynamic track) {
+    setState(() {
+      widget.playlist.tracks.add(track);
+    });
+    _savePlaylists(); // Save the updated playlist
+  }
+
+  Future<void> _savePlaylists() async {
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/playlists.json');
+    List<Map<String, dynamic>> playlistsData = widget.playlist.tracks
+        .map((track) => {
+              'name': widget.playlist.name,
+              'tracks': widget.playlist.tracks,
+            })
+        .toList();
+    await file.writeAsString(json.encode(playlistsData));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Add Tracks to ${widget.playlist.name}'),
+      ),
+      body: FutureBuilder<List<dynamic>>(
+        future: _getAvailableAudioTrack(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const CircularProgressIndicator();
+          } else if (snapshot.hasError) {
+            return Text('Error: ${snapshot.error}');
+          } else if (snapshot.hasData) {
+            var audioList = snapshot.data;
+            return ListView.builder(
+              itemCount: audioList?.length,
+              itemBuilder: (context, index) {
+                final track = audioList?[index];
+                return ListTile(
+                  title: Text(track['title']),
+                  trailing: const Icon(Icons.add),
+                  onTap: () {
+                    _addTrackToPlaylist(track);
+                    Navigator.pop(context); // Go back after adding
+                  },
+                );
+              },
+            );
+          } else {
+            return const Text('No data available');
+          }
+        },
+      ),
+    );
+  }
+}
+
+
+class StoreProgram extends StatefulWidget {
+  const StoreProgram({super.key});
+  @override
+  _StoreProgram createState() => _StoreProgram();
+}
+
+class _StoreProgram extends State<StoreProgram> {
+  @override
+  Widget build(BuildContext context) {
+    String PROGRAM = dotenv.env['PROGRAM'] ?? 'No Program Available';
+    final List<dynamic> programList = json.decode(PROGRAM.toString());
+    return Scaffold(
+      appBar: AppBar(
+        title: const Center(child: Text('All programs')),
+      ),
+      body: ListView.builder(
+          itemCount: programList.length,
+          itemBuilder: (context, index) {
+            var program = programList[index];
+            String programName = program['name'] ?? 'sample program';
+            double price;
+            String sprice;
+
+            if (program['status'] == "free") {
+              price = double.parse('00');
+              sprice = '\nPrice :- This program is FREE';
+            } else {
+              price = double.parse(program['price']);
+              sprice = '\nPrice :- \$' + program['price'];
+            }
+
+            // Now you can safely use sprice here:
+            String shortDescription =
+                program['shortDescription'] + ' ' + sprice;
+            String fullDescription =
+                program['description'] ?? 'Full Description';
+            String audioFileUrl = program['url'] ?? '';
+
+            return Column(
+              children: [
+                ListTile(
+                  leading: const FlutterLogo(),
+                  title: Text(programName),
+                  subtitle: Text(shortDescription),
+                  trailing: const Icon(Icons.more_vert),
+                  onTap: () {
+                    // Ensure onTap is correctly placed and functional
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ProgramDetailPage(
+                            programName: programName,
+                            fullDescription: fullDescription,
+                            price: price,
+                            audioFileUrl: audioFileUrl),
+                      ),
+                    );
+                  },
+                ),
+                const Divider(),
+              ],
+            );
+          }),
+    );
+  }
+}
+
+class SupportPage extends StatelessWidget {
+  // Define a list of items
+  final List<String> items = const [
+    "FAQ",
+    "Contact",
+    "Download Your Latest Audio Files"
+  ];
+
+  const SupportPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Support'),
+      ),
+      body: ListView.builder(
+        itemCount: items.length,
+        itemBuilder: (context, index) {
+          return ListTile(
+            title: Text(items[index]),
+            onTap: () {
+              switch (items[index]) {
+                case "FAQ":
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ScreenFaq()),
+                  );
+                  break;
+                case "Contact":
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const ScreenContact()),
+                  );
+                  break;
+                case "Download Your Latest Audio Files":
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            const DownloadPurchasedAudioFiles()),
+                  );
+                  break;
+              }
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+class ScreenContact extends StatelessWidget {
+  const ScreenContact({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Contact Us')),
+      body: const Padding(
+        padding: EdgeInsets.only(left: 20),
+        child: Text("Names: Matrixinfologics. \nOffice: F4 Indistrial Area"),
+      ),
+    );
+  }
+}
+
+class DownloadPurchasedAudioFiles extends StatelessWidget {
+  const DownloadPurchasedAudioFiles({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Download Your Latest Audio'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(25),
+        child: ElevatedButton(
+          onPressed: () {
+            print("Download audio file");
+          },
+          child: const Text('Synch My Latest Purchased Audio Files'),
+        ),
+      ),
+    );
+  }
+}
+
+class ScreenFaq extends StatefulWidget {
+  const ScreenFaq({super.key});
+
+  @override
+  _ScreenFaqState createState() => _ScreenFaqState();
+}
+
+class _ScreenFaqState extends State<ScreenFaq> {
+  // Define a list of items for the accordion
+  final List<Item> _data = generateItems(5);
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Center(child: Text('Frequently Asked Questions')),
+      ),
+      body: SingleChildScrollView(
+        child: _buildPanel(),
+      ),
+    );
+  }
+
+  Widget _buildPanel() {
+    return ExpansionPanelList(
+      expansionCallback: (int index, bool isExpanded) {
+        setState(() {
+          _data[index].isExpanded = isExpanded;
+        });
+      },
+      children: _data.map<ExpansionPanel>((Item item) {
+        return ExpansionPanel(
+          headerBuilder: (BuildContext context, bool isExpanded) {
+            return ListTile(
+              title: Text(item.headerValue),
+            );
+          },
+          body: ListTile(
+            title: Text(item.expandedValue),
+            subtitle: const Text('Tap to view details'),
+            trailing: const Icon(Icons.more_vert),
+            onTap: () {
+              // Ensure onTap is correctly placed and functional
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => DetailPage(item: item),
+                ),
+              );
+            },
+            onLongPress: () {
+              setState(() {
+                _data.removeWhere((currentItem) => currentItem == item);
+              });
+            },
+          ),
+          isExpanded: item.isExpanded,
+        );
+      }).toList(),
+    );
+  }
+}
+
+class Item {
+  Item({
+    required this.expandedValue,
+    required this.headerValue,
+    this.isExpanded = false,
+  });
+
+  String expandedValue;
+  String headerValue;
+  bool isExpanded;
+}
+
+List<Item> generateItems(int numberOfItems) {
+  return List<Item>.generate(numberOfItems, (int index) {
+    String header;
+    String content;
+
+    switch (index) {
+      case 0:
+        header = 'What is Lorem Ipsum?';
+        content =
+            'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.';
+        break;
+      case 1:
+        header = 'Why do we use it?';
+        content =
+            'It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using \'Content here, content here\', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for \'lorem ipsum\' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like).';
+        break;
+      case 2:
+        header = 'Third Panel';
+        content = 'Content for the third panel';
+        break;
+      default:
+        header = 'Panel $index';
+        content = 'This is the detail for item $index';
+        break;
+    }
+
+    return Item(
+      headerValue: header,
+      expandedValue: content,
+    );
+  });
+}
+
+class DarkLightThemePage extends StatelessWidget {
+  const DarkLightThemePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final selectedTheme = themeProvider.selectedTheme;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Select Your Favourite Theme"),
+      ),
+      body: ListView.builder(
+        itemCount: themeProvider.themes.length,
+        itemBuilder: (context, index) {
+          final theme = themeProvider.themes[index];
+          final isSelected = theme == selectedTheme;
+
+          return ListTile(
+            title: Text(
+              'Theme ${index + 1}',
+              style: TextStyle(
+                color: isSelected ? theme.colorScheme.primary : null,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+            tileColor: isSelected
+                ? theme.colorScheme.secondary.withOpacity(0.2)
+                : null,
+            onTap: () {
+              themeProvider.setTheme(theme);
+            },
+          );
+        },
+      ),
+    );
+  }
+}

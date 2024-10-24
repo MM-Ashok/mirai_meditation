@@ -1,0 +1,50 @@
+name: maditation
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.5.0
+  # sdk: '>=3.3.4 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_dotenv: ^5.1.0 #used to read .env file
+  shared_preferences: ^2.0.8 #will may use later to create play list
+  provider: ^6.0.0 #used dark and light theme
+  flutter_braintree: ^2.0.0
+  flutter_stripe: ^10.2.0
+  flutter_stripe_web: ^5.1.0
+  http: ^1.2.2
+  font_awesome_flutter: ^10.6.0
+  platform: ^3.0.0
+  web: ^1.0.0
+  decimal: ^3.0.2
+  dio: ^5.7.0
+  foundation: ^0.0.5
+  path_provider: ^2.1.4
+  permission_handler: ^11.3.1
+  audioplayers: ^6.1.0
+  just_audio: ^0.9.40
+  supabase_flutter: ^1.0.0
+  audio_session: ^0.1.21
+  html: ^0.15.4
+  sn_progress_dialog: ^1.1.4
+  sign_in_with_apple: ^5.0.0
+    
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_driver:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/.env
+    - lib/assets/available_audio.txt
+    - assets/singers/sample1.png
+    - assets/singers/sample2.png
+    - assets/main-banner.jpg
