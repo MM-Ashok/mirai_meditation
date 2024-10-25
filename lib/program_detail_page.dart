@@ -38,7 +38,8 @@ class ProgramDetailPage extends StatelessWidget {
               padding: const EdgeInsets.only(top: 8.0, bottom: 8.0), // Adjust the values as needed
               child: Text(
                 programName,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: Theme.of(context).textTheme.titleLarge,
+                // style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
             ),
             Text(

@@ -356,6 +356,7 @@ Future<void> _savePlaylists() async {
                   mainAxisSize: MainAxisSize.min,
                   children: playlists.map((playlist) {
                     return flutter_card.Card(
+                        color: Theme.of(context).cardColor,
                         elevation: 4.0, // Adds shadow for better visual effect
                         margin: const EdgeInsets.symmetric(vertical: 8.0),
                         child:ListTile(
@@ -389,6 +390,7 @@ Future<void> _savePlaylists() async {
   void initState() {
     super.initState();
     fetchFreeTracks();
+    // _initializeFreeTracks();
     _audioPlayer = AudioPlayer(); // Initialize AudioPlayer
     _loadPlaylists();
     _audioPlayer.playerStateStream.listen((state) {
@@ -400,6 +402,9 @@ Future<void> _savePlaylists() async {
     });
     
   }
+// Future<void> _initializeFreeTracks() async {
+//     await fetchFreeTracks();
+//   }
 
   @override
   void dispose() {
@@ -429,31 +434,6 @@ Future<void> _savePlaylists() async {
     }
   }
 
-
-//   Future<List<dynamic>> fetchFreeTracks() async {
-//     String freeProgramsJson = dotenv.env['PROGRAM'] ?? '[]';
-//     List<dynamic> programsData = jsonDecode(freeProgramsJson);
-//     return programsData
-//         .where((program) => program['status'] == 'free')
-//         .map((program) => {
-//             "title": program['name'],
-//             "file": program['url'].split("/").last, // Extracting the file name
-//           })
-//         .toList();
-//   }
-
-// Function to fetch both available audio tracks and free tracks
-  // Future<List<dynamic>> fetchAllTracks() async {
-  //   List<dynamic> availableTracks =
-  //       await _getAvailableAudioTrack(); // Replace with your implementation
-  //   List<dynamic> freeTracks = await fetchFreeTracks();
-
-  //   print('downloaded ======> $availableTracks');
-  //   print('free ======> $freeTracks');
-
-  //   return availableTracks + freeTracks; // Combine both lists
-  // }
-
   Future<List<dynamic>> fetchFreeTracks() async {
     String freeProgramsJson = dotenv.env['PROGRAM'] ?? '[]';
     List<dynamic> programsData = jsonDecode(freeProgramsJson);
@@ -464,45 +444,79 @@ Future<void> _savePlaylists() async {
 
     // Write default audio tracks to available_audio.txt
     await _writeDefaultAudioTracks(freeTracks);
-
     return freeTracks;
   }
 
-  Future<void> _writeDefaultAudioTracks(List<dynamic> freeTracks) async {
-    List<Map<String, String>> defaultTracks = [];
+Future<void> _writeDefaultAudioTracks(List<dynamic> freeTracks) async {
+  // Get the application documents directory
+  Directory appDocDir = await getApplicationDocumentsDirectory();
+  String filePath = '${appDocDir.path}/available_audio.txt';
+  File file = File(filePath);
 
-    // Assuming you want to create default tracks based on the free tracks
-    for (var program in freeTracks) {
-      String audioFileUrl = program['url'] ?? ''; // Get the audio file URL
-      List<String> audioTrackNamePart =
-          audioFileUrl.split("/"); // Split to get the track name part
-      String audioTitle = audioTrackNamePart.last
-          .replaceAll(".mp3", ""); // Extract audio title without .mp3
-
-      // Create the default track entry
-      defaultTracks.add({
-        "title": audioTitle,
-        "file": audioTrackNamePart.last,
-      });
-    }
-
-    // Get the application documents directory
-    Directory appDocDir = await getApplicationDocumentsDirectory();
-    String filePath = '${appDocDir.path}/available_audio.txt';
-
-    // Write the default tracks to the file in JSON format
-    File file = File(filePath);
-    await file.writeAsString(jsonEncode(defaultTracks));
-
-    print('Default audio tracks written to $filePath');
-    print('Default audio tracks written to $defaultTracks');
+  // Check if the file already exists
+  if (await file.exists()) {
+    print('File already exists at $filePath, skipping write.');
+    return; // Exit if the file already exists
   }
+
+  List<Map<String, String>> defaultTracks = [];
+
+  // Assuming you want to create default tracks based on the free tracks
+  for (var program in freeTracks) {
+    String audioFileUrl = program['url'] ?? ''; // Get the audio file URL
+    List<String> audioTrackNamePart = audioFileUrl.split("/"); // Split to get the track name part
+    String audioTitle = audioTrackNamePart.last.replaceAll(".mp3", ""); // Extract audio title without .mp3
+
+    // Create the default track entry
+    defaultTracks.add({
+      "title": audioTitle,
+      "file": audioTrackNamePart.last,
+    });
+  }
+
+  // Write the default tracks to the file in JSON format
+  await file.writeAsString(jsonEncode(defaultTracks));
+
+  print('Default audio tracks written to $filePath');
+  print('Default audio tracks written to $defaultTracks');
+}
+  // Future<void> _writeDefaultAudioTracks(List<dynamic> freeTracks) async {
+  //   List<Map<String, String>> defaultTracks = [];
+
+  //   // Assuming you want to create default tracks based on the free tracks
+  //   for (var program in freeTracks) {
+  //     String audioFileUrl = program['url'] ?? ''; // Get the audio file URL
+  //     List<String> audioTrackNamePart =
+  //         audioFileUrl.split("/"); // Split to get the track name part
+  //     String audioTitle = audioTrackNamePart.last
+  //         .replaceAll(".mp3", ""); // Extract audio title without .mp3
+
+  //     // Create the default track entry
+  //     defaultTracks.add({
+  //       "title": audioTitle,
+  //       "file": audioTrackNamePart.last,
+  //     });
+  //   }
+
+  //   // Get the application documents directory
+  //   Directory appDocDir = await getApplicationDocumentsDirectory();
+  //   String filePath = '${appDocDir.path}/available_audio.txt';
+
+  //   // Write the default tracks to the file in JSON format
+  //   File file = File(filePath);
+  //   await file.writeAsString(jsonEncode(defaultTracks));
+
+  //   print('Default audio tracks written to $filePath');
+  //   print('Default audio tracks written to $defaultTracks');
+  // }
 
 
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = provider.Provider.of<ThemeProvider>(context);
     return MaterialApp(
+      theme: themeProvider.selectedTheme,
       debugShowCheckedModeBanner: false,
       home: DefaultTabController(
         length: 2, // Define the number of tabs
@@ -540,9 +554,9 @@ Future<void> _savePlaylists() async {
                                   onPressed: _showCreatePlaylistDialog,
                                   child: const Text('Create New Playlist'),
                                   style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green, 
-                 foregroundColor: Colors.white, // Set the background color to green
-              ),
+                                    backgroundColor: Colors.green, 
+                                    foregroundColor: Colors.white, // Set the background color to green
+                                  ),
                                 ),
                               ),
                               Expanded(
@@ -551,6 +565,7 @@ Future<void> _savePlaylists() async {
                                   itemBuilder: (context, index) {
                                     final playlist = playlists[index];
                                     return flutter_card.Card(
+                                      color: Theme.of(context).cardColor,
                                       elevation: 4.0, // Adds shadow for better visual effect
                                       margin: const EdgeInsets.symmetric(vertical: 8.0),
                                       child:ListTile(
@@ -592,6 +607,7 @@ Future<void> _savePlaylists() async {
                                     final audio = audioList?[index];
                                     String? currentPlaying =  currentAudioUrl?.split("/").last;
                                     return flutter_card.Card(
+                                      color: Theme.of(context).cardColor,
                                       elevation: 4.0, // Adds shadow for better visual effect
                                       margin: const EdgeInsets.symmetric(vertical: 8.0),
                                       child:ListTile(
@@ -610,6 +626,8 @@ Future<void> _savePlaylists() async {
                                                 String appDocPath = appDocDir.path;
                                                 String filename = audio['file'];
                                                 String audioUrl = '$appDocPath/$filename';
+                                                // print('audio url========$audioUrl');
+                                                //    print('audio url========$filename');
                                                 _playAudio(audioUrl); // Play the audio
                                               },
                                             ),
@@ -741,6 +759,7 @@ class _PlaylistTracksPageState extends State<PlaylistTracksPage> {
               itemBuilder: (context, index) {
                 final track = widget.playlist.tracks[index];
                 return flutter_card.Card(
+                  color: Theme.of(context).cardColor,
                   elevation: 4.0, // Adds shadow for better visual effect
                   margin: const EdgeInsets.symmetric(vertical: 8.0),
                   child:ListTile(
@@ -806,6 +825,13 @@ class _PlaylistTracksPageState extends State<PlaylistTracksPage> {
   }
 }
 
+String truncateToWords(String text, int wordCount) {
+  List<String> words = text.split(' '); // Split the text into words
+  if (words.length <= wordCount) {
+    return text; // Return original text if it has fewer or equal words
+  }
+  return words.take(wordCount).join(' ') + '...'; // Join the first 'wordCount' words and add ellipsis
+}
 class StoreProgram extends StatefulWidget {
   const StoreProgram({super.key});
   @override
@@ -882,7 +908,7 @@ class _StoreProgram extends State<StoreProgram> {
 
                   // Now you can safely use sprice here:
                   // String shortDescription =program['shortDescription'] + ' ' + sprice;
-                  String shortDescription =(program['shortDescription'] ?? '') + ' ' + sprice;
+                  String shortDescription =(program['shortDescription'] ?? '');
                   String fullDescription =
                       program['description'] ?? 'Full Description';
                   String audioFileUrl = program['url'] ?? '';
@@ -892,18 +918,22 @@ class _StoreProgram extends State<StoreProgram> {
                   return Column(
                     children: [
                       flutter_card.Card(
+                      color: Theme.of(context).cardColor,
                       elevation: 4.0, // Adds shadow for better visual effect
                       margin: const EdgeInsets.symmetric(vertical: 8.0),
                       child:ListTile(
                         // leading: const FlutterLogo(),
-                          leading: Image.asset(
-                              singerLogo,
-                              width: 70,
-                              height: 70,
-                              fit: BoxFit.cover,
+                          leading: Container(
+                              height: double.infinity, // Sets the height to 100% of the parent
+                              child: Image.asset(
+                                singerLogo,
+                                width: 70,
+                                height: 70,
+                                fit: BoxFit.cover,
+                              ),
                             ),
-                          title: Text(programName),
-                          subtitle: Text(shortDescription),
+                          title: Text(programName,style: Theme.of(context).textTheme.titleLarge,),
+                          subtitle: Text(truncateToWords(shortDescription,15) + sprice,style: Theme.of(context).textTheme.bodyMedium,),
                           // trailing: const Icon(Icons.more_vert),
                           onTap: () {
                             // Ensure onTap is correctly placed and functional
@@ -921,7 +951,7 @@ class _StoreProgram extends State<StoreProgram> {
                           },
                         ),
                       ),
-                      const Divider(),
+                      // const Divider(),
                     ],
                   );
                 }
@@ -1010,6 +1040,7 @@ class SupportPage extends StatelessWidget {
         itemCount: items.length,
         itemBuilder: (context, index) {
           return flutter_card.Card(
+            color: Theme.of(context).cardColor,
             elevation: 4.0, // Adds shadow for better visual effect
             margin: const EdgeInsets.symmetric(vertical: 8.0),
             child:ListTile(
@@ -1216,6 +1247,7 @@ class DarkLightThemePage extends StatelessWidget {
           final isSelected = theme == selectedTheme;
 
           return flutter_card.Card(
+            color: Theme.of(context).cardColor,
             elevation: 4.0, // Adds shadow for better visual effect
             margin: const EdgeInsets.symmetric(vertical: 8.0),
             child:ListTile(

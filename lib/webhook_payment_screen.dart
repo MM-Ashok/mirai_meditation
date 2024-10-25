@@ -57,7 +57,11 @@ class _WebhookPaymentScreenState extends State<WebhookPaymentScreen> {
     if (price == 0) {
       _isPaymentSuccess = true;
     }
-    return ExampleScaffold(
+
+MaterialColor buttonColor = (_card?.complete == false && _email.isNotEmpty)
+    ? Colors.green // This is fine as Colors.green is a MaterialColor
+    : Colors.red; // Change this to a MaterialColor as well
+   return ExampleScaffold(
       title: 'Please provide your card details',
       padding: const EdgeInsets.symmetric(horizontal: 16),
       children: [
@@ -88,16 +92,13 @@ class _WebhookPaymentScreenState extends State<WebhookPaymentScreen> {
           LoadingButton(
             onPressed: _card?.complete == true ? _handlePayPress : null,
             text: 'Pay',
+            // color: Colors.green, // Set background color
+            color: buttonColor, // Use the dynamically determined color
+            textColor: Colors.white,
           ),
         const SizedBox(height: 20),
         if (_isPaymentSuccess)
           ElevatedButton(
-            // onPressed: () async {
-            //   String url = audioFileUrl;
-            //   String filename = audioFileUrl.replaceAll("http://192.168.1.8/", "");
-            //   await downloadFile(url, filename);
-            //   await updatePurchasedAudioListing("available_audio.txt",audioFileUrl);
-            // },
             onPressed: () async {
               await dotenv.load(fileName: 'assets/.env');
               // Fetching program data from the .env file
@@ -110,15 +111,7 @@ class _WebhookPaymentScreenState extends State<WebhookPaymentScreen> {
 
               if (programList.isNotEmpty) {
                 var firstProgram =
-                    programList[0]; // Accessing the first item in the list
-                // if (firstProgram is Map<String, dynamic>) {
-                //   String url = firstProgram['url'] ?? '';
-                //   if (url.isNotEmpty) {
-                //     baseUrl = Uri.parse(url).scheme + "://" + Uri.parse(url).host;
-                //     print('Base URL =======================> $baseUrl');
-                //   }
-                // }
-              }
+                    programList[0];   }
               if (audioFileUrl.contains(",")) {
                 List<String> downloadUrls = audioFileUrl.split(",");
                 int totalFileToDownload = downloadUrls.length;

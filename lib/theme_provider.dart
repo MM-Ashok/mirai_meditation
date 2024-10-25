@@ -39,6 +39,14 @@ class ThemeProvider with ChangeNotifier {
       backgroundColor: Colors.grey,
       foregroundColor: Colors.white,
     ),
+    scaffoldBackgroundColor: const Color(0xFFd8d6d6),
+    cardColor: const Color(0XFFa5a2a2),
+    textTheme: const TextTheme(
+      displayLarge: TextStyle(color: Color(0XFFffffff)),  // Large headline color
+      titleLarge: TextStyle(color: Color(0XFFffffff),fontSize: 20,fontWeight: FontWeight.bold), // Smaller heading color
+      bodyLarge: TextStyle(color: Color(0XFFffffff)),  // Primary body text color
+      bodyMedium: TextStyle(color: Color(0XFFffffff)), // Secondary body text color
+    ),
   );
 
   static final ThemeData darkTheme = ThemeData(
@@ -51,6 +59,14 @@ class ThemeProvider with ChangeNotifier {
     appBarTheme: AppBarTheme(
       backgroundColor: Colors.grey[900]!,
       foregroundColor: Colors.white,
+    ),
+    scaffoldBackgroundColor: const Color.fromARGB(255, 156, 157, 158),
+    cardColor: const Color.fromARGB(255, 165, 166, 167),
+    textTheme: const TextTheme(
+      displayLarge: TextStyle(color: Colors.black),  // Large headline color
+      titleLarge: TextStyle(color: Colors.black87,fontSize: 20,fontWeight: FontWeight.bold), // Smaller heading color
+      bodyLarge: TextStyle(color: Colors.black54),  // Primary body text color
+      bodyMedium: TextStyle(color: Colors.black45), // Secondary body text color
     ),
   );
 
@@ -65,6 +81,14 @@ class ThemeProvider with ChangeNotifier {
       backgroundColor: Colors.red,
       foregroundColor: Colors.white,
     ),
+    scaffoldBackgroundColor: const Color.fromARGB(255, 207, 113, 100),
+    cardColor: const Color.fromARGB(255, 230, 133, 104),
+    textTheme: const TextTheme(
+      displayLarge: TextStyle(color: Colors.black),  // Large headline color
+      titleLarge: TextStyle(color: Colors.black87,fontSize: 20,fontWeight: FontWeight.bold), // Smaller heading color
+      bodyLarge: TextStyle(color: Colors.black54),  // Primary body text color
+      bodyMedium: TextStyle(color: Colors.black45), // Secondary body text color
+    ),
   );
 
   static final ThemeData greenTheme = ThemeData(
@@ -77,6 +101,14 @@ class ThemeProvider with ChangeNotifier {
     appBarTheme: const AppBarTheme(
       backgroundColor: Colors.green,
       foregroundColor: Colors.white,
+    ),
+    scaffoldBackgroundColor: const Color.fromARGB(255, 73, 201, 84),
+    cardColor: const Color.fromARGB(255, 74, 219, 122),
+    textTheme: const TextTheme(
+      displayLarge: TextStyle(color: Colors.black),  // Large headline color
+      titleLarge: TextStyle(color: Colors.black87,fontSize: 20,fontWeight: FontWeight.bold), // Smaller heading color
+      bodyLarge: TextStyle(color: Colors.black54),  // Primary body text color
+      bodyMedium: TextStyle(color: Colors.black45), // Secondary body text color
     ),
   );
 
@@ -91,13 +123,21 @@ class ThemeProvider with ChangeNotifier {
       backgroundColor: Colors.blue,
       foregroundColor: Colors.white,
     ),
+    scaffoldBackgroundColor: const Color.fromARGB(255, 123, 198, 235),
+    cardColor: const Color.fromARGB(255, 128, 170, 197),
+    textTheme: const TextTheme(
+      displayLarge: TextStyle(color: Color.fromARGB(255, 255, 16, 16)),  // Large headline color
+      titleLarge: TextStyle(color: Color.fromARGB(244, 245, 22, 22),fontSize: 20,fontWeight: FontWeight.bold), // Smaller heading color
+      bodyLarge: TextStyle(color: Color.fromARGB(228, 236, 15, 15)),  // Primary body text color
+      bodyMedium: TextStyle(color: Color.fromARGB(115, 236, 28, 28)), // Secondary body text color
+    ),
   );
 
   List<ThemeData> get themes => [
         lightTheme,
-        darkTheme,
-        redTheme,
-        greenTheme,
-        blueTheme,
+        // darkTheme,
+        // redTheme,
+        // greenTheme,
+        // blueTheme,
       ];
 }
